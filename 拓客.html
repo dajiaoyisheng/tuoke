@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* 初始页面背景颜色为 red */
+        body{
+            background-color: red;
+        }
+        .res-test-cl p {
+            max-width: 700px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h3 class="title">
+        <span>测试结果</span>
+    </h3>
+    <i class="cur_data"></i> 
+    <input type='text' id="pageNumE" onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" >
+    <div class="res-test-cl">
+        <h4>1- 姓名、职务、电话、公司名四要素要齐全,不符合预期的cid集合为: </h4>
+        <p class="res-test-1-cl"></p>
+        <h5>姓名为空的id集合：</h5>
+        <p class="res-test-1-name-cl"></p>
+        <h5>职务为空的id集合：</h5>
+        <p class="res-test-1-position-cl"></p>
+        <h5>电话为空的id集合：</h5>
+        <p class="res-test-1-phone-cl"></p>
+        <h5>公司名为空的id集合：</h5>
+        <p class="res-test-1-companyName-cl"></p>
+    </div>
+    <div class="res-test-cl">
+        <h4>不满足：中股权穿透后，注册总资本＞500万或实 缴资总资本本大于500万,cid为: </h4>
+        <p class="res-test-2-cl"></p>
+    </div>
+    <div class="res-test-cl">
+        <h4>不满足：公司成立时间至少4年或以上（≤2015年）,cid集合为: </h4>
+        <p class="res-test-4-companyCreateTime-cl"></p>
+    </div>
+    <div class="res-test-cl">
+        <h4>公司名称中包含关键词：['文化','基金','金融','咨询'],cid集合为: </h4>
+        <!-- res_test_companyName_in_arry -->
+        <p class="res-test-7-companyName-cl"></p>
+    </div>
+    </table>
+    <script>
+        // 保存接口返回数据
+        var resData = null;
+        // 自定义页数pageNum,每页数据数。
+        var req_pram = {
+            "pageNum": 1,
+            "pageSize": 1000
+        };
+        document.getElementById('pageNumE').addEventListener('click', ()=>{
+            console.log(document.getElementById('pageNumE').value);
+        }, false)
+
+        // 如果数据中不存在cid,放入其他数据
+        let noCid = (testResArry, value) => {
+            testResArry.push(`<这条数据没有cid;它的id: ${value.id};customerName: ${value.customerName},companyName: ${value.companyName}>`)
+        };
+
+        let url = 'http://test.marketingextension.datatojoy.com/marketing-extension-api/manage/system/clueList';
+        let reqAction = `POST`;
+
+        let searchData = ()=>{
+            // 当请求数据时将背景颜色改为 red
+            document.getElementsByTagName('body')[0].style.backgroundColor = 'red';
+            // 在页面上显示当前测试数据范围
+            document.getElementsByClassName('cur_data')[0].innerHTML = `(当前测试数据为 ${(req_pram.pageNum-1)*req_pram.pageSize+1}-${req_pram.pageNum*req_pram.pageSize} 条数据)`;
+            // 请求接口数据
+            var httpRequest = new XMLHttpRequest();
+            httpRequest.open(reqAction, url, true); 
+            httpRequest.setRequestHeader("Content-type","application/json");
+            httpRequest.send(JSON.stringify(req_pram));
+            httpRequest.onreadystatechange = () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    resData = JSON.parse(httpRequest.responseText);
+                    // 列表数据
+                    let listData = resData._data.list;
+                    // 存放不符合预期 1- 姓名、职务、电话、公司名四要素要齐全； 的cid
+                    let res_test_isnull_arry = [],
+                        name_isnull_arry = [],
+                        position_isnull_arry = [],
+                        phone_isnull_arry = [],
+                        companyName_isnull_arry = [],
+                    // 存放不符合预期 2- 股权穿透后，注册总资本＞500万或实 缴资总资本本大于500万；的id
+                        res_test_ltfive_arry = [],
+                        res_test_companyCreateTime_lt2015_arry = [],
+                        res_test_companyName_in_arry = [];
+                    listData.forEach((v, i) =>{
+                        // 数据筛选标准：
+                        // 1- 姓名、职务、电话、公司名四要素要齐全；
+                        // 如果cid存在
+                        // if (v.cid) {
+                            if (!v.customerName || !v.position || !v.phone || !v.companyName) {
+                                if (v.cid) {
+                                    res_test_isnull_arry.push(v.cid)
+                                    
+                                }else{
+                                    noCid(res_test_isnull_arry, v);
+                                    // noCid(name_isnull_arry, v);
+                                    // noCid(position_isnull_arry, v);
+                                    // noCid(phone_isnull_arry, v);
+                                    // noCid(companyName_isnull_arry, v);
+                                }
+                                if(!v.customerName){
+                                        name_isnull_arry.push(v.cid)
+                                    } else if(!v.position){
+                                        position_isnull_arry.push(v.cid)
+                                    } else if(!v.phone){
+                                        phone_isnull_arry.push(v.cid)
+                                    } else if(!v.companyName){
+                                        companyName_isnull_arry.push(v.cid)
+                                    } 
+                            };
+                            if(v.companyCreateTime&&v.companyCreateTime.substring(0, 4) > 2015) { // 4- 公司成立时间至少4年或以上（≤2015年）；
+                                res_test_companyCreateTime_lt2015_arry.push(v.cid)
+                                // attribution: "广东省·深圳市·龙岗区"
+                                // cid: 2313997355
+                                // companyCreateTime: "2013-00-12"
+                                // companyName: "深圳市嘉润康科技有限公司"
+                                // companyNum: "2"
+                                // customerId: "4E3272C34270377B57FE202168DE89C7"
+                                // customerName: "温显荣"
+                                // id: "5376"
+                                // industry: "批发和零售业·批发业·机械设备、五金产品及电子产品批发"
+                                // investmentAmount: "2"
+                                // investmentCapacity: "0.68"
+                                // paidInCapital: "100.0"
+                                // phone: "13662261991,"
+                                // position: "总经理"
+                                // pushState: null
+                                // pushTime: null
+                                // registeredCapital: "2000.0"
+                            } else if (v.companyName && (v.companyName.includes('文化') ||  v.companyName.includes('基金') || v.companyName.includes('金融') || v.companyName.includes('咨询'))){ // 7、公司名称过滤关键词：['文化','基金','金融','咨询']
+                                res_test_companyName_in_arry.push(`<这条数据公司名称包含关键词 ${v.companyName.includes('文化')&&'文化'}、${v.companyName.includes('基金')&&'基金'}、${v.companyName.includes('金融')&&'金融'}、${v.companyName.includes('咨询')&&'咨询'};它的cid: ${v.cid};customerName: ${v.customerName},companyName: ${v.companyName}>`);
+                            }
+                            // 6- 选择行业：联营项目历史成交分析一级行业（前五） ：房地产业、批发和零售业、租赁和商务服务业、制造业、建筑业
+                            
+                        // } else if(!v.cid) { // 如果cid不存在
+                        //     noCid(res_test_isnull_arry, v);
+                        //     noCid(name_isnull_arry, v);
+                        //     noCid(position_isnull_arry, v);
+                        //     noCid(phone_isnull_arry, v);
+                        //     noCid(companyName_isnull_arry, v);
+                        //     noCid(res_test_companyCreateTime_lt2015_arry, v);
+                        //     noCid(res_test_companyName_in_arry, v);
+                        // }
+                        // 2- 股权穿透后，注册总资本＞500万或实缴资总资本大于500万；
+                        if (v.registeredCapital < 500) {
+                            res_test_ltfive_arry.push(listData[i].cid)
+                        }
+                        // 3- 电话至少要经过空号检测。
+                        
+                        // 二要素最低要在自主拉新里面检测，尽量做通过二要素验证；
+                        
+                        // 5- 企业主为股权穿透后最高领导人
+                        
+                    })
+                    // 一
+                    document.getElementsByClassName('res-test-1-cl')[0].innerHTML = res_test_isnull_arry.length?res_test_isnull_arry:'无';
+                    document.getElementsByClassName('res-test-1-name-cl')[0].innerHTML = name_isnull_arry.length?name_isnull_arry:'无';
+                    document.getElementsByClassName('res-test-1-position-cl')[0].innerHTML = position_isnull_arry.length?position_isnull_arry:'无';
+                    document.getElementsByClassName('res-test-1-phone-cl')[0].innerHTML = phone_isnull_arry.length?phone_isnull_arry:'无';
+                    document.getElementsByClassName('res-test-1-companyName-cl')[0].innerHTML = companyName_isnull_arry.length?companyName_isnull_arry:'无';
+                    // 二
+                    document.getElementsByClassName('res-test-2-cl')[0].innerHTML = res_test_ltfive_arry;
+                    // 三
+                    // 四
+                    document.getElementsByClassName('res-test-4-companyCreateTime-cl')[0].innerHTML = res_test_companyCreateTime_lt2015_arry.length?res_test_companyCreateTime_lt2015_arry:'无';
+                    // 七
+                    document.getElementsByClassName('res-test-7-companyName-cl')[0].innerHTML = res_test_companyName_in_arry.length?res_test_companyName_in_arry:'无';
+                    // 当数据渲染结束后将背景颜色改为 green
+                    document.getElementsByTagName('body')[0].style.backgroundColor = 'green';
+                }
+            };
+        }
+        // 查询接口
+        searchData();
+        // 如果在输入框中按下enter键
+        let pageNumE = document.getElementById('pageNumE');
+        pageNumE.onkeydown = (e)=>{
+            var keyNum = window.event ? e.keyCode :e.which;
+            if(keyNum == 13){
+                req_pram.pageNum = pageNumE.value;
+                searchData()
+		 	}
+        }
+        
+    </script>
+</body>
+</html>
