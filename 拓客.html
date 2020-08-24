@@ -29,7 +29,7 @@
         <p class="res-test-1-name-cl"></p>
         <h5>职务为空的id集合：</h5>
         <p class="res-test-1-postion-cl"></p>
-        <h5>电话为空的id集合：暂不测试</h5>
+        <h5>电话为空的id集合：</h5>
         <p class="res-test-1-phone-cl"></p>
         <h5>公司名为空的id集合：</h5>
         <p class="res-test-1-companyName-cl"></p>
@@ -47,14 +47,15 @@
         <!-- res_test_companyName_in_arry -->
         <p class="res-test-7-companyName-cl"></p>
     </div>
-    </table>
+    <script src="./jquery.min.js"></script>
     <script>
+        
         // 保存接口返回数据
         var resData = null;
         // 自定义页数pageNum,每页数据数。
         var req_pram = {
             "pageNum": 1,
-            "pageSize": 1000
+            "pageSize": 10
         };
         let res_test_isnull_arry = [],
         name_isnull_arry = [],
@@ -94,10 +95,26 @@
                             phone_isnull_arry.push(v.cid)
                         }
                     })
+                document.getElementsByClassName('res-test-1-phone-cl')[0].innerHTML = phone_isnull_arry.length?phone_isnull_arry:'无';
+
                 }
             }
         }
-        let searchData = ()=>{
+        // let searchData = ()=>{
+        // }
+        // 查询接口
+        searchData();
+        // 如果在输入框中按下enter键
+        let pageNumE = document.getElementById('pageNumE');
+        pageNumE.onkeydown = (e)=>{
+            var keyNum = window.event ? e.keyCode :e.which;
+            if(keyNum == 13){
+                req_pram.pageNum = pageNumE.value;
+                searchData()
+		 	}
+        }
+        
+        async function searchData(){
             // 当请求数据时将背景颜色改为 red
             document.getElementsByTagName('body')[0].style.backgroundColor = 'red';
             // 在页面上显示当前测试数据范围
@@ -121,6 +138,10 @@
                         // 1- 姓名、职务、电话、公司名四要素要齐全；
                         // 如果cid存在
                         // if (v.cid) {
+                            if(v.companyName == '北京市缘多食品有限责任公司'){
+                                alert(v)
+                                console.log(v);
+                            }
                             if (!v.customerName || !v.postion || !v.companyName) {
                                 if (v.cid) {
                                     res_test_isnull_arry.push(v.cid)
@@ -162,7 +183,7 @@
                         document.getElementsByClassName('res-test-1-cl')[0].innerHTML = res_test_isnull_arry.length?res_test_isnull_arry:'无';
                         document.getElementsByClassName('res-test-1-name-cl')[0].innerHTML = name_isnull_arry.length?name_isnull_arry:'无';
                         document.getElementsByClassName('res-test-1-postion-cl')[0].innerHTML = postion_isnull_arry.length?postion_isnull_arry:'无';
-                        document.getElementsByClassName('res-test-1-phone-cl')[0].innerHTML = phone_isnull_arry.length?phone_isnull_arry:'无';
+                        
                         document.getElementsByClassName('res-test-1-companyName-cl')[0].innerHTML = companyName_isnull_arry.length?companyName_isnull_arry:'无';
                         // 二
                         document.getElementsByClassName('res-test-2-cl')[0].innerHTML = res_test_ltfive_arry;
@@ -173,25 +194,16 @@
                         document.getElementsByClassName('res-test-7-companyName-cl')[0].innerHTML = res_test_companyName_in_arry.length?res_test_companyName_in_arry:'无';
                         // 当数据渲染结束后将背景颜色改为 green
                         document.getElementsByTagName('body')[0].style.backgroundColor = 'green';
-                        
+                        return v
                     })
                     
                 }
             };
-        }
-        // 查询接口
-        searchData();
-        // 如果在输入框中按下enter键
-        let pageNumE = document.getElementById('pageNumE');
-        pageNumE.onkeydown = (e)=>{
-            var keyNum = window.event ? e.keyCode :e.which;
-            if(keyNum == 13){
-                req_pram.pageNum = pageNumE.value;
-                searchData()
-		 	}
-        }
-        
+
+        };
+
         
     </script>
 </body>
 </html>
+

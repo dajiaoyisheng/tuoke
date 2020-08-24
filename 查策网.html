@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查策网数据检测</title>
+</head>
+<body>
+    <script src="./jquery.min.js"></script>
+    <script src="./content_website.js"></script>
+    <script src="./chace.js"></script>
+    <h2>测试结果：</h2>
+    <h5>展示网站中不包含数据库中的内容</h5>
+    <span>policy_src_id: <i class="policy-src-id"></i></span>
+    
+    <div class="res_box">
+        <h3>项目名称:</h3>
+        <div class="name-cl"></div>
+        <h3>受理部门:</h3>
+        <div class="department-cl"></div>
+        <h3>地区:</h3>
+        <div class="region-cl"></div>
+        <h3>申报时间:</h3>
+        <div class="apply-date-cl"></div>
+        <h3>申报条件:</h3>
+        <div class="apply-condition-cl"></div>
+    </div>
+
+    <script>
+        let source_webside = sourceData;
+        let name_arr = [],
+            department_arr = [],
+            region_arr = [],
+            apply_date_arr = [],
+            apply_condition_arr = [];
+        // 检查数据库第n条数据，从0开始；
+        let n = 1
+
+
+        // region 地区
+        // apply_date 申报时间
+        // apply_condition 申报条件
+        // industry_name  产业类别 
+        // support_strength 支持力度 
+        // declare_material 申报材料 
+        // project_source  项目来源
+        // city  城市
+        let data_index = resultdata_sql.RECORDS[n];
+        // 2020.08.05  -   2020.08.16
+        // 2020-08-05&nbsp;-&nbsp;2020-08-16
+
+        //         <span class="detail-time">
+        //                                 <i class="fa fa-clock-o" aria-hidden="true"></i>
+        // 2020-08-05&nbsp;-&nbsp;2020-08-16
+        //                             </span>
+
+        // stringObject.replace(regexp/substr,replacement) 
+        
+        console.log(sourceData.match(/(\d{4}-\d{2}-\d{2}).+(\d{4}-\d{2}-\d{2})/g));
+        console.log(!!data_index.apply_date);
+        // console.log(sourceData.replace(,'replacement'));
+        let policySrcId = data_index.policy_src_id;
+        $('.policy-src-id').html(policySrcId);
+        
+        if (!sourceData.includes(data_index.policy_name)) { // 检查项目名称
+            console.log(data_index.policy_name);
+            name_arr.push(`<p>${data_index.policy_name}</p>`)
+            $('.name-cl').html(`${name_arr}`)
+        }
+        if(!sourceData.includes(data_index.department)){  // 受理部门
+            department_arr.push(`<p>${data_index.department}</p>`)
+            $('.department-cl').html(`${department_arr}`)
+        }
+        if(!sourceData.includes(data_index.region)){ // 地区
+            region_arr.push(`<p>${data_index.region}</p>`)
+            $('.region-cl').html(`${region_arr}`)
+        }
+        if(data_index.apply_date){ // apply_date 申报时间
+            apply_date_arr.push(`<p>${data_index.apply_date}</p>`)
+            $('.apply-date-cl').html(`<p>数据库的申报时间：${apply_date_arr}</p><p>网站的申报时间：${sourceData.match(/(\d{4}-\d{2}-\d{2}).+(\d{4}-\d{2}-\d{2})/g)}`)
+        }
+        if(!sourceData.includes(data_index.apply_condition)){ // apply_condition 申报条件
+            
+            apply_condition_arr.push(`<p>${data_index.apply_condition}</p>`)
+            $('.apply-condition-cl').html(`${apply_condition_arr}`)
+        }
+
+    </script>
+</body>
+</html>
+

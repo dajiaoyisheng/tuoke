@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="./jquery.min.js"></script>
+    <h3 class="title">
+        <span>测试结果</span>
+    </h3>
+    <i class="cur_data"></i> 
+    <input type='text' id="pageNumE" placeholder="输入页数，enter搜索" onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')">
+    <div class="res-test-cl">
+        <h4>1- 姓名、职务、电话、公司名四要素要齐全,不符合预期的cid集合为: </h4>
+        <p class="res-test-1-cl"></p>
+        <h5>姓名为空的id集合：</h5>
+        <p class="res-test-1-name-cl"></p>
+        <h5>职务为空的id集合：</h5>
+        <p class="res-test-1-postion-cl"></p>
+        <h5>电话为空的id集合：</h5>
+        <p class="res-test-1-phone-cl"></p>
+        <h5>公司名为空的id集合：</h5>
+        <p class="res-test-1-companyName-cl"></p>
+    </div>
+    <div class="res-test-cl">
+        <h4>不满足：中股权穿透后，注册总资本＞500万或实 缴资总资本本大于500万,cid为: </h4>
+        <p class="res-test-2-cl"></p>
+    </div>
+    <div class="res-test-cl">
+        <h4>不满足：选择行业：联营项目历史成交分析一级行业（前五） ：房地产业、批发和零售业、租赁和商务服务业、制造业、建筑业 </h4>
+        <p class="res-test-6-industry1-cl"></p>
+    </div>
+    <div class="res-test-cl">
+        <h4>公司名称中包含关键词：['文化','基金','金融','咨询'],cid集合为: </h4>
+        <!-- res_test_companyName_in_arry -->
+        <p class="res-test-7-companyName-cl"></p>
+    </div>
+    <script>
+
+        let res_test_isnull_arry = [],
+            name_isnull_arry = [],
+            postion_isnull_arry = [],
+            phone_isnull_arry = [],
+            companyName_isnull_arry = [],
+        // 存放不符合预期 2- 股权穿透后，注册总资本＞500万或实 缴资总资本本大于500万；的id
+            res_test_ltfive_arry = [],
+            res_test_industry1_arry = [],
+            res_test_companyName_in_arry = [];
+        let coutNum = 0;
+        let url_list = 'http://marketingextension.datatojoy.com/marketing-extension-api/manage/system/getToBeRecommendedCustomerData';
+
+        var pram_list = {"pageNum":1,"pageSize":1500};
+        
+        let getListData = async () => {
+            coutNum = 0
+            // 当请求数据时将背景颜色改为 red
+            $('body').eq(0).css('backgroundColor', 'red')
+            // 在页面上显示当前测试数据范围
+            $('.cur_data').eq(0).html(`(当前测试数据为 ${(pram_list.pageNum-1)*pram_list.pageSize+1}-${pram_list.pageNum*pram_list.pageSize} 条数据)`)
+
+            let data = null;
+            let detailData = null;
+            await $.ajax({
+                type: "POST",
+                datType: "JSON",
+                url: url_list,
+                data: JSON.stringify(pram_list),
+                contentType: "application/json; charset=UTF-8",
+                success: res => {
+                    if(res._code == "000000"){
+                        // 列表数据
+                        let listData = res._data.clueListVOList;
+                        // 存放不符合预期 1- 姓名、职务、电话、公司名四要素要齐全； 的cid
+                        listData.forEach((v, i) =>{
+                            detailData = v
+                                if (!v.customerName || !v.postion || !v.companyName) {
+                                    if (v.cid) {
+                                        res_test_isnull_arry.push(v.cid)
+                                    }else{
+                                        noCid(res_test_isnull_arry, v);
+                                    }
+                                    if(!v.customerName){
+                                            name_isnull_arry.push(v.cid)
+                                        } else if(!v.postion){
+                                            postion_isnull_arry.push(v.cid)
+                                        } else if(!v.companyName){
+                                            companyName_isnull_arry.push(v.cid)
+                                        } 
+                                };
+                                // 6- 选择行业：联营项目历史成交分析一级行业（前五） ：房地产业、批发和零售业、租赁和商务服务业、制造业、建筑业
+                                if(!v.industry1.includes('房地产业') && !v.industry1.includes('批发和零售业') && !v.industry1.includes('制造业') && !v.industry1.includes('建筑业') && !v.industry1.includes('租赁和商务服务业')){
+                                    res_test_industry1_arry.push(`${v.cid} , `)
+                                }
+            
+                                if (v.companyName && (v.companyName.includes('文化') || v.companyName.includes('基金') || v.companyName.includes('金融') || v.companyName.includes('咨询'))){ // 7、公司名称过滤关键词：['文化','基金','金融','咨询']
+                                    res_test_companyName_in_arry.push(`<这条数据公司名称包含关键词 ${v.companyName.includes('文化')?'文化':''}、${v.companyName.includes('基金')?'基金':''}、${v.companyName.includes('金融')?'金融':''}、${v.companyName.includes('咨询')?'咨询':''};它的cid: ${v.cid};customerName: ${v.customerName},companyName: ${v.companyName}>`);
+                                }
+                                // 6- 选择行业：联营项目历史成交分析一级行业（前五） ：房地产业、批发和零售业、租赁和商务服务业、制造业、建筑业
+                                
+                            // 2- 股权穿透后，注册总资本＞500万或实缴资总资本大于500万；
+                            if (v.regCapital < 500 && v.regCapitalAmountPrecent < 500) {
+                                res_test_ltfive_arry.push(`${v.cid} , `)
+                                // res_test_ltfive_arry.push(`cid:${v.cid} v.customerName: ${v.customerName} , `)
+                            }
+                            $('.res-test-1-cl').eq(0).html(res_test_isnull_arry.length?res_test_isnull_arry:'无')
+                            $('.res-test-1-name-cl').eq(0).html(name_isnull_arry.length?name_isnull_arry:'无')
+                            $('.res-test-1-postion-cl').eq(0).html(postion_isnull_arry.length?postion_isnull_arry:'无')
+                            $('.res-test-1-companyName-cl').eq(0).html(companyName_isnull_arry.length?companyName_isnull_arry:'无')
+                            $('.res-test-2-cl').eq(0).html(res_test_ltfive_arry.length?res_test_ltfive_arry:'无')
+                            $('.res-test-6-industry1-cl').eq(0).html(res_test_industry1_arry.length?res_test_industry1_arry:'无')
+                            $('.res-test-7-companyName-cl').eq(0).html(res_test_companyName_in_arry.length?res_test_companyName_in_arry:'无')
+                            
+                            getDetailData(v)
+                        })
+
+                    }else{
+                        alert(res._msg)
+                    }
+                }
+            })
+        };
+        function getDetailData (data){
+            let url_detail = `http://marketingextension.datatojoy.com/marketing-extension-api/manage/system/getToBeRecommendedCustomerDetail?cid=${data.cid}`;
+            $.get(url_detail, (resData)=>{
+                var detailListData = resData._data.clueDetailContactVOList;
+                detailListData.forEach((v, i)=>{
+                    if(!v.customerNumber){
+                        phone_isnull_arry.push(v.cid)
+                    }
+                })
+                coutNum++;
+                if(coutNum == pram_list.pageSize - 1){
+                    // 当数据渲染结束后将背景颜色改为 green
+                    $('body').eq(0).css('backgroundColor', 'green')
+                }
+                $('.res-test-1-phone-cl').eq(0).html(phone_isnull_arry.length ? phone_isnull_arry : '无')
+            })
+        }
+
+        // 获取列表数据
+        getListData();
+        $("#pageNumE").keypress(e => {
+            if(e.which == 13){
+                pram_list.pageNum = $("#pageNumE").val();
+                getListData()
+            }
+        });
+
+    </script>
+</body>
+</html>
